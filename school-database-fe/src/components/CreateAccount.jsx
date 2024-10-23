@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { app } from '../firebaseConfig';
 
 const CreateAccount = () => {
   const [email, setEmail] = useState('');
@@ -18,24 +20,26 @@ const CreateAccount = () => {
       alert("Please accept the Terms and Conditions");
       return;
     }
+    const auth = getAuth(app);
     try {
-      const response = await fetch('http://localhost:3001/register', {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log("Created user:", user);
+
+      // Call your backend
+      await fetch('http://localhost:3001/user-registered', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ uid: user.uid, email: user.email }),
       });
-      const data = await response.json();
-      if (response.ok) {
-        alert('Account created successfully');
-        navigate('/'); // Redirect to login page
-      } else {
-        alert(data.message || 'An error occurred');
-      }
+
+      alert('Account created successfully');
+      navigate('/'); // Redirect to login page
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+      console.error("Error creating account:", error.message);
+      alert(error.message || 'An error occurred');
     }
   };
 

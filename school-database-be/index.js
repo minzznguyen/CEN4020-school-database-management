@@ -66,6 +66,13 @@ app.post('/change-password', authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/user-registered', async (req, res) => {
+  const { uid, email } = req.body;
+  // Here you can add the user to your own database if needed
+  // Or perform any other server-side operations
+  res.status(200).json({ message: 'User registered successfully' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

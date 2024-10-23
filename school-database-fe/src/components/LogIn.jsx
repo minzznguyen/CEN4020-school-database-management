@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { app } from '../firebaseConfig'; // Make sure to create this file
 
 const LogIn = () => {
     const [email, setEmail] = useState('');
@@ -8,24 +10,15 @@ const LogIn = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const auth = getAuth(app);
         try {
-            const response = await fetch('http://localhost:3001/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-            const data = await response.json();
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                navigate('/dashboard'); // Redirect to dashboard or home page
-            } else {
-                alert(data.message);
-            }
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            console.log("Logged in user:", user);
+            navigate('/dashboard');
         } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            console.error("Error signing in:", error.message);
+            alert(error.message);
         }
     };
 
