@@ -3,16 +3,26 @@ const express = require('express');
 const app = express();
 const PORT = 3000;
 const studentCourseRecordController = require('./controllers/studentCourseRecordController');
+const departmentRoutes = require('./routes/departmentRoutes');
+const recordRoutes = require('./routes/recordRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const advisorRoutes = require('./routes/advisorRoutes');
 
 // Middleware to parse JSON requests
 app.use(express.json());
 
-// Define API routes
-app.get('/records', studentCourseRecordController.getAllStudentCourseRecords);
-app.get('/records/:id', studentCourseRecordController.getStudentCourseRecordById);
-app.post('/records', studentCourseRecordController.addStudentCourseRecord);
-app.put('/records/:id', studentCourseRecordController.updateStudentCourseRecord);
-app.delete('/records/:id', studentCourseRecordController.deleteStudentCourseRecord);
+// Mount routes
+app.use('/departments', departmentRoutes);
+app.use('/records', recordRoutes);
+app.use('/courses', courseRoutes);
+app.use('/students', studentRoutes);
+app.use('/advisors', advisorRoutes);
+
+// Test API endpoint
+app.get('/test', (req, res) => {
+  res.json({ message: 'Hello World!' });
+});
 
 // Start the server
 app.listen(PORT, () => {
