@@ -11,4 +11,4 @@ token.json
 
 # Other potential sensitive files
 *.pem
-*.key
+*.keyschool-database-be/serviceAccountKeys.json
