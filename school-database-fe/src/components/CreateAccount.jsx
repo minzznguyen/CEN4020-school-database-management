@@ -14,6 +14,37 @@ const CreateAccount = () => {
               Create an account
             </h1>
             <form className="space-y-4 md:space-y-6" action="#">
+              {/* First Name Field */}
+              <div>
+                <label htmlFor="first-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  name="first-name"
+                  id="first-name"
+                  placeholder="John"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  required
+                />
+              </div>
+              
+              {/* Last Name Field */}
+              <div>
+                <label htmlFor="last-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="last-name"
+                  id="last-name"
+                  placeholder="Doe"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                   Your email
@@ -27,6 +58,29 @@ const CreateAccount = () => {
                   required
                 />
               </div>
+
+              {/* Role Dropdown */}
+              <div>
+                <label htmlFor="role" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Select your role
+                </label>
+                <select
+                  name="role"
+                  id="role"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  required
+                >
+                  <option value="" disabled selected>
+                    Select role
+                  </option>
+                  <option value="student">Student</option>
+                  <option value="instructor">Instructor</option>
+                  <option value="staff">Staff</option>
+                  <option value="advisor">Advisor</option>
+                </select>
+              </div>
+
+              {/* Password Field */}
               <div>
                 <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                   Password
@@ -40,6 +94,8 @@ const CreateAccount = () => {
                   required
                 />
               </div>
+
+              {/* Confirm Password Field */}
               <div>
                 <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                   Confirm password
@@ -53,6 +109,8 @@ const CreateAccount = () => {
                   required
                 />
               </div>
+
+              {/* Terms Checkbox */}
               <div className="flex items-start">
                 <div className="flex items-center h-5">
                   <input
@@ -72,12 +130,16 @@ const CreateAccount = () => {
                   </label>
                 </div>
               </div>
+
+              {/* Submit Button */}
               <button
                 type="submit"
                 className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               >
                 Create an account
               </button>
+
+              {/* Already have an account */}
               <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                 Already have an account?{' '}
                 <a href="#" className="font-medium text-primary-600 hover:underline dark:text-primary-500">
