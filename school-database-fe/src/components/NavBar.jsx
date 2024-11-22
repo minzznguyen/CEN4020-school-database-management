@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom"; // Use Link for routing
+import { Menu, X } from "lucide-react";
 
 const navItems = [
   { label: "Home", href: "/home" },
@@ -23,14 +23,8 @@ const NavBar = () => {
 
   return (
     <nav className="bg-[#f9fafb]/30 sticky top-0 z-50 py-3 backdrop-blur-lg shadow-sm border-gray-100">
-      <div className="container mx-auto px-4 md:px-8 relative text-sm"> {/* Added horizontal padding */}
+      <div className="container mx-auto px-4 md:px-8 relative text-sm">
         <div className="flex justify-between items-center">
-          {/* <div className="flex items-center flex-shrink-0">
-            <Link to="/">
-              <img className="h-10 w-15 mr-2" src={logo} alt="logo" />
-            </Link>
-          </div> */}
-
           {/* Desktop and tablet view */}
           <ul className="hidden md:flex ml-14 space-x-12">
             {navItems.map((item, index) => (
