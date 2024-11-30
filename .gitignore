@@ -1,0 +1,14 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Google Cloud credentials
+serviceAccountKeys.json
+*-service-account.json
+credentials.json
+token.json
+
+# Other potential sensitive files
+*.pem
+*.keyschool-database-be/serviceAccountKeys.json
