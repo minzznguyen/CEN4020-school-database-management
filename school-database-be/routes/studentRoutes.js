@@ -21,4 +21,4 @@ router.delete('/:id', deleteStudent);
 router.post('/course/register', registerStudentForCourse);
 router.post('/course/drop', dropStudentFromCourse);
 
-module.exports = router; 
+module.exports = router;
