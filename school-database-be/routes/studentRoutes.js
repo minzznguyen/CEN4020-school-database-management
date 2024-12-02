@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   getAllStudents,
   getStudentById,
-  addStudent,
+  createStudent,
   updateStudent,
   deleteStudent,
   registerStudentForCourse,
@@ -13,12 +13,9 @@ const {
 // Basic CRUD routes
 router.get('/', getAllStudents);
 router.get('/:id', getStudentById);
-router.post('/', addStudent);
+router.post('/', createStudent);
 router.put('/:id', updateStudent);
 router.delete('/:id', deleteStudent);
 
-// Special course registration routes
-router.post('/course/register', registerStudentForCourse);
-router.post('/course/drop', dropStudentFromCourse);
 
 module.exports = router;

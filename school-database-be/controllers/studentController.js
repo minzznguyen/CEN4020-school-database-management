@@ -47,30 +47,52 @@ const getStudentById = async (req, res) => {
   }
 };
 
-// Add new student
-const addStudent = async (req, res) => {
+// Create new student
+const createStudent = async (req, res) => {
   try {
-    const { name, departmentId } = req.body;
+    const { name, majorId } = req.body;
 
-    if (!name || !departmentId) {
-      return res.status(400).json({ error: 'Name and departmentId are required' });
+    // Validate required fields
+    if (!name || !majorId) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Generate new student ID
-    const studentId = await generateNewId();
+    // Get all students to determine next ID
+    const studentsSnapshot = await db.collection('Students').get();
+    const nextId = (studentsSnapshot.size + 1).toString();
 
+    // Create new student
     const newStudent = {
-      studentId,
       name,
-      departmentId,
-      courses: [] // Initialize empty courses array
+      majorId,
+      studentCourseRecord: [],
     };
 
-    const docRef = await db.collection('Students').add(newStudent);
-    res.status(201).json({ id: docRef.id, ...newStudent });
+    // Add student document
+    await db.collection('Students').doc(nextId).set(newStudent);
+
+    // Update Major's studentId array
+    const majorDoc = await db.collection('Major').doc(majorId).get();
+    if (!majorDoc.exists) {
+      return res.status(404).json({ error: 'Major not found' });
+    }
+
+    await db.collection('Major').doc(majorId).update({
+      studentId: [...(majorDoc.data().studentId || []), nextId]
+    });
+
+    res.status(201).json({
+      message: 'Student created successfully',
+      studentId: nextId,
+      ...newStudent
+    });
+
   } catch (error) {
-    console.error('Error adding student:', error);
-    res.status(500).json({ error: 'Failed to add student' });
+    console.error('Error creating student:', error);
+    res.status(500).json({ 
+      error: 'Failed to create student',
+      details: error.message 
+    });
   }
 };
 
@@ -78,10 +100,10 @@ const addStudent = async (req, res) => {
 const updateStudent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, departmentId } = req.body;
+    const { name, majorId } = req.body;
 
-    if (!name && !departmentId) {
-      return res.status(400).json({ error: 'At least one field (name or departmentId) is required' });
+    if (!name && !majorId) {
+      return res.status(400).json({ error: 'At least one field (name or majorId) is required' });
     }
 
     const studentDoc = await db.collection('Students').doc(id).get();
@@ -91,7 +113,7 @@ const updateStudent = async (req, res) => {
 
     const updatedData = {};
     if (name) updatedData.name = name;
-    if (departmentId) updatedData.departmentId = departmentId;
+    if (majorId) updatedData.majorId = majorId;
 
     await db.collection('Students').doc(id).update(updatedData);
     res.status(200).json({ id, ...updatedData });
@@ -119,107 +141,10 @@ const deleteStudent = async (req, res) => {
   }
 };
 
-// Register student for course
-const registerStudentForCourse = async (req, res) => {
-  try {
-    const { studentId, courseId, advisorId } = req.body;
-
-    if (!studentId || !courseId || !advisorId) {
-      return res.status(400).json({ error: 'studentId, courseId, and advisorId are required' });
-    }
-
-    // Get student, advisor, and course details
-    const [studentDoc, advisorDoc, courseDoc] = await Promise.all([
-      db.collection('Students').doc(studentId).get(),
-      db.collection('Advisor').doc(advisorId).get(),
-      db.collection('Course').doc(courseId).get()
-    ]);
-
-    if (!studentDoc.exists || !advisorDoc.exists || !courseDoc.exists) {
-      return res.status(404).json({ error: 'Student, advisor, or course not found' });
-    }
-
-    const student = studentDoc.data();
-    const advisor = advisorDoc.data();
-
-    if (student.departmentId !== advisor.departmentId) {
-      return res.status(403).json({ error: 'Advisor can only register students from their department' });
-    }
-
-    // Check if student is already registered for this course
-    const existingRegistration = await db.collection('StudentCourseRecord')
-      .where('studentId', '==', studentId)
-      .where('courseId', '==', courseId)
-      .get();
-
-    if (!existingRegistration.empty) {
-      return res.status(409).json({ error: 'Student is already registered for this course' });
-    }
-
-    const registration = {
-      studentId,
-      courseId,
-      advisorId,
-      registrationDate: new Date().toISOString()
-    };
-
-    const docRef = await db.collection('StudentCourseRecord').add(registration);
-    res.status(201).json({ id: docRef.id, ...registration });
-  } catch (error) {
-    console.error('Error registering student for course:', error);
-    res.status(500).json({ error: 'Failed to register student for course' });
-  }
-};
-
-// Drop student from course
-const dropStudentFromCourse = async (req, res) => {
-  try {
-    const { studentId, courseId, advisorId } = req.body;
-
-    if (!studentId || !courseId || !advisorId) {
-      return res.status(400).json({ error: 'studentId, courseId, and advisorId are required' });
-    }
-
-    // Get student and advisor details
-    const [studentDoc, advisorDoc] = await Promise.all([
-      db.collection('Students').doc(studentId).get(),
-      db.collection('Advisor').doc(advisorId).get()
-    ]);
-
-    if (!studentDoc.exists || !advisorDoc.exists) {
-      return res.status(404).json({ error: 'Student or advisor not found' });
-    }
-
-    const student = studentDoc.data();
-    const advisor = advisorDoc.data();
-
-    if (student.departmentId !== advisor.departmentId) {
-      return res.status(403).json({ error: 'Advisor can only drop students from their department' });
-    }
-
-    const registrationSnapshot = await db.collection('StudentCourseRecord')
-      .where('studentId', '==', studentId)
-      .where('courseId', '==', courseId)
-      .get();
-
-    if (registrationSnapshot.empty) {
-      return res.status(404).json({ error: 'Registration record not found' });
-    }
-
-    await registrationSnapshot.docs[0].ref.delete();
-    res.status(200).json({ message: 'Student successfully dropped from course' });
-  } catch (error) {
-    console.error('Error dropping student from course:', error);
-    res.status(500).json({ error: 'Failed to drop student from course' });
-  }
-};
-
 module.exports = {
   getAllStudents,
   getStudentById,
-  addStudent,
+  createStudent,
   updateStudent,
-  deleteStudent,
-  registerStudentForCourse,
-  dropStudentFromCourse
+  deleteStudent
 };
