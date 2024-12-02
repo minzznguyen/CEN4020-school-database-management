@@ -64,25 +64,26 @@ a.hover-effect:hover::before {
          
          
 .btn-grad {
-  background-image: linear-gradient(to right, #54bab3 0%, #035cae  51%, #54bab3  100%);
-  margin: 10px;
-  padding: 15px 20px;
+  background-image: linear-gradient(to right, #3e3f55 0%, #8095a3 51%, #333 100%); /* Black to gray gradient */
+  margin: 8px; /* Reduce margin slightly */
+  padding: 8px 16px; /* Smaller padding for a more compact look */
   text-align: center;
   text-transform: uppercase;
   transition: 0.5s;
   background-size: 200% auto;
-  color: rgb(247, 252, 255);            
-  box-shadow: 0 0 20px #eee;
-  border-radius: 25px;
-  display: block;
+  color: #fff; /* Keep the text white for contrast */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for a professional look */
+  border-radius: 4px; /* Less rounded corners */
+  font-size: 0.85rem; /* Slightly smaller font size */
+  display: inline-block; /* Inline-block for better control */
 }
 
 .btn-grad:hover {
-  background-position: right center; /* change the direction of the change here */
-  color: #fff;
+  background-position: right center;
+  color: #f0f0f0; /* Slightly lighter text on hover */
   text-decoration: none;
 }
- 
+
   .link--popup-text {
     position: relative;
     display: inline-block; /* Ensure the element has a proper width */

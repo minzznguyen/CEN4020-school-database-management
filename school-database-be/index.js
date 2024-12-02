@@ -1,7 +1,7 @@
 // index.js
 const express = require('express');
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 const studentCourseRecordController = require('./controllers/studentCourseRecordController');
 const departmentRoutes = require('./routes/departmentRoutes');
 const recordRoutes = require('./routes/recordRoutes');

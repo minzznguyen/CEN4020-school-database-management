@@ -1,19 +1,24 @@
-import { Route, Routes } from 'react-router-dom';
-import LogIn from './components/LogIn';
-import ChangePassword from './components/ChangePassword'; 
-import CreateAccount from './components/CreateAccount';
-import BaseHome from './components/BaseHome'; // Import your BaseHome component
-import StaffSummaryPage from './components/StaffSummaryPage';
+import { Route, Routes, Navigate } from 'react-router-dom';
+import LogIn from './components/login/LogIn';
+import ChangePassword from './components/login/ChangePassword'; 
+import CreateAccount from './components/login/CreateAccount';
 import WhatIfAnalysisPage from './components/WhatIfAnalysis';
-import StudentSummaryPage from './components/StudentSummaryPage'; 
-import AdvisorSummaryPage from './components/AdvisorSummaryPage'; 
-import InstructorSummaryPage from './components/InstructorSummaryPage';
 
-export default function App() {
-  // Simulating user role from authentication or global state.
-  const userRole = 'Student'; // Replace this with dynamic authentication logic.
+// Import Role-Specific Pages
+import Student from './components/student/Student';
+import StudentSummaryPage from './components/student/StudentSummaryPage';
+import Instructor from './components/instructor/Instructor';
+import InstructorSummaryPage from './components/instructor/InstructorSummaryPage';
+import Advisor from './components/advisor/Advisor';
+import AdvisorSummaryPage from './components/advisor/AdvisorSummaryPage';
+import Staff from './components/staff/Staff';
+import StaffSummaryPage from './components/staff/StaffSummaryPage';
 
-  // Dynamic redirection based on role.
+// Simulating user role from authentication or global state
+const userRole = 'Student'; // Replace this with dynamic authentication logic.
+
+const App = () => {
+  // Dynamic redirection based on role
   const getDashboardPath = () => {
     switch (userRole) {
       case 'Student':
@@ -25,76 +30,43 @@ export default function App() {
       case 'Staff':
         return '/staff';
       default:
-        return '/'; // Redirect to login if role is invalid.
+        return '/'; // Redirect to login if role is invalid
     }
   };
 
   return (
     <div>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<LogIn />} />
-        <Route path="/staff/summary" element={<StaffSummaryPage />} />
-        <Route path='/what-if' element={<WhatIfAnalysisPage />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/create-account" element={<CreateAccount />} />
+        <Route path="/what-if" element={<WhatIfAnalysisPage />} />
+
+        {/* Student Routes */}
+        <Route path="/student" element={<Student />} />
         <Route path="/student/summary" element={<StudentSummaryPage />} />
-        <Route path="/advisor/summary" element={<AdvisorSummaryPage />} />
+
+        {/* Instructor Routes */}
+        <Route path="/instructor" element={<Instructor />} />
         <Route path="/instructor/summary" element={<InstructorSummaryPage />} />
-        <Route
-          path="/staff"
-          element={
-            <BaseHome
-              userRole="Staff"
-              permissions={{
-                canViewDetails: true,
-                canModifyCourses: true,
-                canManageInstructors: true,
-                canAddInstructors: true,
-                canAddStudents: false,
-                canManageDepartment: true,
-              }}
-            />
-          }
-        />
-        <Route
-          path="/advisor"
-          element={
-            <BaseHome
-              userRole="Advisor"
-              permissions={{
-                canViewDetails: true,
-                canAddStudents: true,
-                canDropStudents: true,
-                canModifyCourses: false,
-                canManageInstructors: false,
-                canManageDepartment: false,
-              }}
-            />
-          }
-        />
-        <Route
-          path="/student"
-          element={
-            <BaseHome
-              userRole="Student"
-              permissions={{
-                canViewDetails: true,
-              }}
-            />
-          }
-        />
-        <Route
-          path="/instructor"
-          element={
-            <BaseHome
-              userRole="Instructor"
-              permissions={{
-                canViewDetails: true,
-              }}
-            />
-          }
-        />
+
+        {/* Advisor Routes */}
+        <Route path="/advisor" element={<Advisor />} />
+        <Route path="/advisor/summary" element={<AdvisorSummaryPage />} />
+
+        {/* Staff Routes */}
+        <Route path="/staff" element={<Staff />} />
+        <Route path="/staff/summary" element={<StaffSummaryPage />} />
+
+        {/* Dynamic Role-Based Redirect */}
+        <Route path="/dashboard" element={<Navigate to={getDashboardPath()} />} />
+
+        {/* Catch-All Route */}
+        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </div>
   );
-}
+};
+
+export default App;

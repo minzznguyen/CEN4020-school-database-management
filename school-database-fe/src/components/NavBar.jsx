@@ -4,8 +4,7 @@ import { Menu, X } from "lucide-react";
 
 const navItems = [
   { label: "Home", href: "/home" },
-  { label: "Summary", href: "/summary" },
-  { label: "What-if Analysis", href: "/what-if" }
+  { label: "What-if Analysis", href: "/what-if" } // Removed "Summary"
 ];
 
 const NavBar = () => {
