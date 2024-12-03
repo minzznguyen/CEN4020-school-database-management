@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom"; // Use Link for routing
 import { Menu, X } from "lucide-react";
 
-const navItems = [
-  { label: "Home", href: "/home" },
-  { label: "Summary", href: "/summary" },
-  { label: "What-if Analysis", href: "/what-if" }
-];
-
-const NavBar = () => {
+const NavBar = ({ userRole }) => { // Destructure userRole from props
+  const navItems = [
+    { label: "Home", href: `/${userRole}` }, // Dynamically create the home link based on the user role
+    { label: "Summary", href: `/${userRole}/summary` },
+    { label: "What-if Analysis", href: "/what-if" }
+  ];
+  
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const location = useLocation();

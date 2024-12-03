@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import NavBar from './NavBar.jsx';
-import { useUser } from '../context/UserContext';
 
 const BaseHome = ({ userRole, permissions }) => {
-  const { user } = useUser();
-  console.log("testing context working")
-  console.log(user);
-  if (!user) {
-    // If there's no user (i.e., not logged in), redirect to login page
-    return <Navigate to="/login" />;
-  }
+
   const [courses, setCourses] = useState([
     {
       id: 1,
@@ -63,7 +56,7 @@ const BaseHome = ({ userRole, permissions }) => {
 
   return (
     <div>
-      <NavBar />
+      <NavBar userRole = {userRole}/>
       <div className="container mx-auto px-4 lg:px-16 py-8">
         <h1 className="text-2xl font-bold mb-6">{userRole} Dashboard</h1>
 

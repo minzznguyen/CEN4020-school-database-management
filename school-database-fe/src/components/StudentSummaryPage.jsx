@@ -16,10 +16,7 @@ const StudentSummaryPage = () => {
     totalCredits: 75,
     requiredCredits: 120,
   });
-  const [feedbackFromInstructors, setFeedbackFromInstructors] = useState([
-    { course: 'Data Structures', instructor: 'Dr. Smith', feedback: 'Excellent performance and participation.' },
-    { course: 'Operating Systems', instructor: 'Dr. Lee', feedback: 'Keep improving on project deadlines.' },
-  ]);
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -68,19 +65,7 @@ const StudentSummaryPage = () => {
           </div>
         </div>
 
-        {/* Feedback from Instructors */}
-        <div className="bg-white shadow-lg rounded-lg p-6 col-span-2">
-          <h2 className="text-xl font-semibold mb-4">Instructor Feedback</h2>
-          <ul className="space-y-2">
-            {feedbackFromInstructors.map((feedback, index) => (
-              <li key={index} className="flex flex-col space-y-1">
-                <span className="font-medium">{feedback.course}</span>
-                <span className="text-sm">Instructor: {feedback.instructor}</span>
-                <p className="text-sm italic">"{feedback.feedback}"</p>
-              </li>
-            ))}
-          </ul>
-        </div>
+      
       </div>
     </div>
   );
