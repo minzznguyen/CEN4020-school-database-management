@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, doc, setDoc, collection, query, getDocs, orderBy, limit } from "firebase/firestore";
-import { app } from '../firebaseConfig';
+// import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+// import { getFirestore, doc, setDoc, collection, query, getDocs, orderBy, limit } from "firebase/firestore";
+// import { app } from '../firebaseConfig';
+import axios from 'axios';
 
 const CreateAccount = () => {
   const [formData, setFormData] = useState({
@@ -25,19 +26,19 @@ const CreateAccount = () => {
     }));
   };
 
-  const generateNewId = async (collectionName) => {
-    const db = getFirestore(app);
-    const collectionRef = collection(db, collectionName);
+  // const generateNewId = async (collectionName) => {
+  //   const db = getFirestore(app);
+  //   const collectionRef = collection(db, collectionName);
     
-    const snapshot = await getDocs(query(collectionRef, orderBy('studentId', 'desc'), limit(1)));
+  //   const snapshot = await getDocs(query(collectionRef, orderBy('studentId', 'desc'), limit(1)));
     
-    if (snapshot.empty) {
-      return "1";
-    }
+  //   if (snapshot.empty) {
+  //     return "1";
+  //   }
     
-    const highestId = snapshot.docs[0].data().studentId;
-    return (parseInt(highestId) + 1).toString();
-  };
+  //   const highestId = snapshot.docs[0].data().studentId;
+  //   return (parseInt(highestId) + 1).toString();
+  // };
 
   const validatePassword = (password) => {
     if (password.length < 8) return false;
@@ -50,86 +51,81 @@ const CreateAccount = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
+  
     try {
       const { firstName, lastName, email, role, password, confirmPassword } = formData;
-
+  
       // Validations
       if (password !== confirmPassword) {
         alert("Passwords don't match");
+        setIsLoading(false);
         return;
       }
-
+  
       if (!validatePassword(password)) {
         alert('Password must be at least 8 characters long and contain uppercase, lowercase, and numbers');
+        setIsLoading(false);
         return;
       }
-
+  
       if (!acceptTerms) {
         alert("Please accept the Terms and Conditions");
+        setIsLoading(false);
         return;
       }
-
+  
       if (!role) {
         alert("Please select a role");
+        setIsLoading(false);
         return;
       }
+  
+      // // Call Firebase Auth to create a user
+      // const auth = getAuth(app);
+      // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // const user = userCredential.user;
+  
+      // Prepare data for the backend
+      let newData = {};
 
-      const auth = getAuth(app);
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Create UserType document
-      const db = getFirestore(app);
-      await setDoc(doc(db, "UserType", email), {
-        type: role,
-        userId: user.uid
-      });
-
-      // Create role-specific document
-      if (role === "student") {
-        const newStudentId = await generateNewId("Students");
-        await setDoc(doc(db, "Students", newStudentId), {
-          studentId: newStudentId,
-          name: `${firstName} ${lastName}`,
-          departmentId: "1",
-          majorId: "1",
-          courses: []
-        });
-      } 
-      else if (role === "instructor") {
-        const newInstructorId = await generateNewId("Instructor");
-        await setDoc(doc(db, "Instructor", newInstructorId), {
-          instructorId: newInstructorId,
-          name: `${firstName} ${lastName}`,
-          departmentId: "1"
-        });
+      let endpoint = '';
+      switch (role) {
+        case 'student':
+          newData = {name: `${firstName} ${lastName}`, majorId: '1'};
+          endpoint = 'http://localhost:3000/students/';
+          break;
+        case 'instructor':
+          newData = {name: `${firstName} ${lastName}`, departmentId: '1'};
+          endpoint = 'http://localhost:3000/instructors/';
+          break;
+        // case 'staff':
+        //   newData = {name, departmentId: ['1']};
+        //   endpoint = 'http://localhost:3000/staff/';
+        //   break;
+        case 'advisor':
+          newData = {AdvisorId: '1', name: `${firstName} ${lastName}`, departments: ['1']};
+          endpoint = 'http://localhost:3000/advisors/';  
+          break;
+        default:
+          throw new Error("Invalid role specified");
       }
-      else if (role === "advisor") {
-        const newAdvisorId = await generateNewId("Advisor");
-        await setDoc(doc(db, "Advisor", newAdvisorId), {
-          advisorId: newAdvisorId,
-          name: `${firstName} ${lastName}`,
-          departmentId: "1"
-        });
+      
+      // Define the endpoint based on the role
+  
+      // Make the POST request
+      console.log(newData);
+      const response = await axios.post(endpoint, newData);
+  
+      if (response.status === 201) {
+        alert('Account created successfully');
+        navigate('/');
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`);
       }
-      else if (role === "staff") {
-        const newStaffId = await generateNewId("Staff");
-        await setDoc(doc(db, "Staff", newStaffId), {
-          staffId: newStaffId,
-          name: `${firstName} ${lastName}`,
-          departmentId: "1"
-        });
-      }
-
-      alert('Account created successfully');
-      navigate('/');
     } catch (error) {
       console.error("Error creating account:", error);
-      if (error.code === 'auth/email-already-in-use') {
-        alert('Email already exists. Please use a different email.');
-      } else if (error.code === 'auth/weak-password') {
-        alert('Password is too weak. Please use a stronger password.');
+      if (error.response && error.response.data) {
+        alert(error.response.data.message || 'An error occurred.');
       } else {
         alert(error.message || 'An error occurred while creating your account.');
       }
@@ -137,6 +133,7 @@ const CreateAccount = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <section className="bg-gray-50 dark:bg-gray-900">
