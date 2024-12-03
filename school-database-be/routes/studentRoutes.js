@@ -6,8 +6,8 @@ const {
   createStudent,
   updateStudent,
   deleteStudent,
-  registerStudentForCourse,
-  dropStudentFromCourse
+  getStudentGPA,
+  getStudentCourses
 } = require('../controllers/studentController');
 
 // Basic CRUD routes
@@ -17,5 +17,8 @@ router.post('/', createStudent);
 router.put('/:id', updateStudent);
 router.delete('/:id', deleteStudent);
 
+// Additional student routes
+router.get('/:studentId/gpa', getStudentGPA);
+router.get('/:studentId/courses', getStudentCourses);
 
 module.exports = router;

@@ -9,6 +9,7 @@ const courseRoutes = require('./routes/courseRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const advisorRoutes = require('./routes/advisorRoutes');
 const majorRoutes = require('./routes/majorRoutes');
+const instructorRoutes = require('./routes/instructorRoutes.js'); // Add this line
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -20,6 +21,7 @@ app.use('/courses', courseRoutes);
 app.use('/students', studentRoutes);
 app.use('/advisors', advisorRoutes);
 app.use('/majors', majorRoutes);
+app.use('/instructors', instructorRoutes); // Add this line
 
 // Test API endpoint
 app.get('/test', (req, res) => {
