@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-// import { getFirestore, doc, setDoc, collection, query, getDocs, orderBy, limit } from "firebase/firestore";
-// import { app } from '../firebaseConfig';
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { getFirestore, doc, setDoc, collection, query, getDocs, orderBy, limit } from "firebase/firestore";
+import { app } from '../firebaseConfig';
 import axios from 'axios';
 
 const CreateAccount = () => {
@@ -26,19 +26,19 @@ const CreateAccount = () => {
     }));
   };
 
-  // const generateNewId = async (collectionName) => {
-  //   const db = getFirestore(app);
-  //   const collectionRef = collection(db, collectionName);
+  const generateNewId = async (collectionName) => {
+    const db = getFirestore(app);
+    const collectionRef = collection(db, collectionName);
     
-  //   const snapshot = await getDocs(query(collectionRef, orderBy('studentId', 'desc'), limit(1)));
+    const snapshot = await getDocs(query(collectionRef, orderBy('studentId', 'desc'), limit(1)));
     
-  //   if (snapshot.empty) {
-  //     return "1";
-  //   }
+    if (snapshot.empty) {
+      return "1";
+    }
     
-  //   const highestId = snapshot.docs[0].data().studentId;
-  //   return (parseInt(highestId) + 1).toString();
-  // };
+    const highestId = snapshot.docs[0].data().studentId;
+    return (parseInt(highestId) + 1).toString();
+  };
 
   const validatePassword = (password) => {
     if (password.length < 8) return false;
@@ -80,22 +80,23 @@ const CreateAccount = () => {
         return;
       }
   
-      // // Call Firebase Auth to create a user
-      // const auth = getAuth(app);
-      // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // const user = userCredential.user;
-  
+      // Call Firebase Auth to create a user
+      const auth = getAuth(app);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log("this is user");  
+      console.log(user);
       // Prepare data for the backend
       let newData = {};
 
       let endpoint = '';
       switch (role) {
         case 'student':
-          newData = {name: `${firstName} ${lastName}`, majorId: '1'};
+          newData = {newId: user.uid, name: `${firstName} ${lastName}`, majorId: '1'};
           endpoint = 'http://localhost:3000/students/';
           break;
         case 'instructor':
-          newData = {name: `${firstName} ${lastName}`, departmentId: '1'};
+          newData = {newId: user.uid, name: `${firstName} ${lastName}`, departmentId: '1'};
           endpoint = 'http://localhost:3000/instructors/';
           break;
         // case 'staff':
@@ -103,8 +104,9 @@ const CreateAccount = () => {
         //   endpoint = 'http://localhost:3000/staff/';
         //   break;
         case 'advisor':
-          newData = {AdvisorId: '1', name: `${firstName} ${lastName}`, departments: ['1']};
+          newData = {AdvisorId: user.uid, name: `${firstName} ${lastName}`, Departments: ['1']};
           endpoint = 'http://localhost:3000/advisors/';  
+          console.log(newData);
           break;
         default:
           throw new Error("Invalid role specified");
@@ -113,11 +115,25 @@ const CreateAccount = () => {
       // Define the endpoint based on the role
   
       // Make the POST request
-      console.log(newData);
       const response = await axios.post(endpoint, newData);
-  
+      console.log("this is response");
+      console.log(response);
+      const tempuser = auth.currentUser;
       if (response.status === 201) {
         alert('Account created successfully');
+        if (tempuser && !tempuser.emailVerified) {
+          // Send the verification email
+          try {
+              await sendEmailVerification(tempuser);
+              console.log("Verification email sent!");
+              alert('A verification email has been sent to your email address. Please verify your email before proceeding.');
+          } catch (error) {
+              console.error("Error sending verification email:", error);
+              alert('There was an error sending the verification email.');
+          }
+      } else {
+          console.log("User is already verified or not logged in.");
+      }
         navigate('/');
       } else {
         throw new Error(`Unexpected response status: ${response.status}`);

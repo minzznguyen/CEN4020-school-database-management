@@ -129,13 +129,21 @@ const getStudentCourses = async (req, res) => {
 // Create new student
 const createStudent = async (req, res) => {
   try {
-    const { name, majorId } = req.body;
+    const { name, majorId, newId } = req.body;
 
-    if (!name || !majorId) {
+    if (!name || !majorId || !newId) {
+      console.log('Request Body:', req.body);
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    const studentSnapshot = await db.collection('Students')
+      .where('newId', '==', newId)
+      .get();
 
-    const newId = await generateNewId();
+    if (!advisorSnapshot.empty) {
+      return res.status(409).json({ error: 'Advisor with this AdvisorId already exists' });
+    }
+
+
 
     const newStudent = {
       name,

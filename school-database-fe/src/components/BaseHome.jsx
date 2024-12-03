@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import NavBar from './NavBar.jsx';
+import { useUser } from '../context/UserContext';
 
 const BaseHome = ({ userRole, permissions }) => {
+  const { user } = useUser();
+  console.log("testing context working")
+  console.log(user);
+  if (!user) {
+    // If there's no user (i.e., not logged in), redirect to login page
+    return <Navigate to="/login" />;
+  }
   const [courses, setCourses] = useState([
     {
       id: 1,

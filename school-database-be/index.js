@@ -10,9 +10,15 @@ const studentRoutes = require('./routes/studentRoutes');
 const advisorRoutes = require('./routes/advisorRoutes');
 const majorRoutes = require('./routes/majorRoutes');
 const instructorRoutes = require('./routes/instructorRoutes.js'); // Add this line
+const cors = require('cors');
 
 // Middleware to parse JSON requests
 app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Mount routes
 app.use('/departments', departmentRoutes);

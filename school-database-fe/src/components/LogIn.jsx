@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { app } from '../firebaseConfig';
+import { useUser } from '../context/UserContext';  // Ensure the correct path to UserContext.js
 
 const LogIn = () => {
+    const { setUser } = useUser();  // Use the setUser function to update the context
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -19,19 +21,30 @@ const LogIn = () => {
             const auth = getAuth(app);
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
+            console.log(user);
 
             // Get user role from UserType collection
             const db = getFirestore(app);
-            const userTypeDoc = await getDoc(doc(db, "UserType", email));
-            
+            let role = '';
+            let userTypeDoc = await getDoc(doc(db, 'Students', user.uid));
+            role = 'student';
             if (!userTypeDoc.exists()) {
-                throw new Error("User role not found");
+                userTypeDoc = await getDoc(doc(db, 'Instructor', user.uid));
+                role = 'instructor';
+            } else if (!userTypeDoc.exists()) {
+                userTypeDoc = await getDoc(doc(db, 'Advisor', user.uid));
+                role = 'advisor';
+            }
+            console.log(userTypeDoc);
+            if (!userTypeDoc.exists()) {
+                throw new Error('User role not found');
             }
 
-            const userType = userTypeDoc.data().type;
+            // Set user in context
+            setUser(user);  // Update the user context with the logged-in user
 
             // Route based on user role
-            switch (userType.toLowerCase()) {
+            switch (role) {
                 case 'student':
                     navigate('/student');
                     break;
@@ -45,12 +58,12 @@ const LogIn = () => {
                     navigate('/staff');
                     break;
                 default:
-                    throw new Error("Invalid user role");
+                    throw new Error('Invalid user role');
             }
-            
-            console.log("Logged in user:", user);
+
+            console.log('Logged in user:', user);
         } catch (error) {
-            console.error("Error signing in:", error);
+            console.error('Error signing in:', error);
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                 alert('Invalid email or password');
             } else {

@@ -148,13 +148,19 @@ const getInstructorStudents = async (req, res) => {
 // Create new instructor
 const createInstructor = async (req, res) => {
   try {
-    const { name, departmentId } = req.body;
+    const { name, departmentId, newId } = req.body;
 
-    if (!name || !departmentId) {
+    if (!name || !departmentId || !newId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    const instructorSnapshot = await db.collection('Instructor')
+      .where('InstructorId', '==', newId)
+      .get();
 
-    const newId = await generateNewId();
+    if (!advisorSnapshot.empty) {
+      return res.status(409).json({ error: 'Advisor with this AdvisorId already exists' });
+    }
+
 
     const newInstructor = {
       name,
