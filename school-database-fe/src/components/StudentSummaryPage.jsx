@@ -9,12 +9,14 @@ const StudentSummaryPage = () => {
     semesterGpa: [
       { semester: 'Fall 2024', gpa: 3.8 },
       { semester: 'Spring 2024', gpa: 3.5 },
+      { semester: 'Fall 2023', gpa: 3.4 },
+      { semester: 'Spring 2023', gpa: 3.6 },
+      { semester: 'Fall 2022', gpa: 3.8 },
+      { semester: 'Spring 2022', gpa: 3.5 },
+      {semester: 'Fall 2021', gpa: 3.7}
     ],
   });
-  const [enrolledCourses, setEnrolledCourses] = useState([
-    { courseId: 1, courseName: 'Algorithms', instructor: 'Dr. Smith', grade: 'A-', credits: 3 },
-    { courseId: 2, courseName: 'Linear Algebra', instructor: 'Dr. Lee', grade: 'B+', credits: 3 },
-  ]);
+
   const [academicProgress, setAcademicProgress] = useState({
     totalCredits: 75,
     requiredCredits: 120,
@@ -42,19 +44,7 @@ const StudentSummaryPage = () => {
           </ul>
         </div>
 
-        {/* Enrolled Courses */}
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Enrolled Courses</h2>
-          <ul className="space-y-2">
-            {enrolledCourses.map((course, index) => (
-              <li key={index} className="flex flex-col space-y-1">
-                <span className="font-medium">{course.courseName} ({course.credits} credits)</span>
-                <span className="text-sm">Instructor: {course.instructor}</span>
-                <span className="text-sm">Grade: {course.grade}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        
 
         {/* Academic Progress */}
         <div className="bg-white shadow-lg rounded-lg p-6">
