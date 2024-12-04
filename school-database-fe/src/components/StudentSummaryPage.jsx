@@ -1,5 +1,8 @@
 import { useState } from 'react';
+import axios from 'axios';
 
+// const gpa = await axios.get('http://localhost:3000/students/1/gpa');
+// console.log(gpa);
 const StudentSummaryPage = () => {
   const [studentGpa, setStudentGpa] = useState({
     overallGpa: 3.6,
@@ -17,6 +20,8 @@ const StudentSummaryPage = () => {
     requiredCredits: 120,
   });
 
+// router.get('/:studentId/gpa', getStudentGPA);
+// router.get('/:studentId/courses', getStudentCourses);
 
   return (
     <div className="container mx-auto px-4 py-8">

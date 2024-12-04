@@ -8,11 +8,14 @@ import WhatIfAnalysisPage from './components/WhatIfAnalysis';
 import StudentSummaryPage from './components/StudentSummaryPage'; 
 import AdvisorSummaryPage from './components/AdvisorSummaryPage'; 
 import InstructorSummaryPage from './components/InstructorSummaryPage';
+import { useUser } from './context/UserContext'; 
+import NavBar from './components/NavBar';
 
 export default function App() {
   // Simulating user role from authentication or global state.
   const userRole = 'Student'; // Replace this with dynamic authentication logic.
-
+  const { user } = useUser();
+  console.log(user);
   // Dynamic redirection based on role.
   const getDashboardPath = () => {
     switch (userRole) {
@@ -31,15 +34,35 @@ export default function App() {
 
   return (
     <div>
+
       <Routes>
         <Route path="/" element={<LogIn />} />
-        <Route path="/staff/summary" element={<StaffSummaryPage />} />
+        <Route path="/staff/summary" element={
+          <div>
+          <NavBar userRole = "staff"/>
+          <StaffSummaryPage />
+          </div>
+          } 
+          />
         <Route path='/what-if' element={<WhatIfAnalysisPage />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/create-account" element={<CreateAccount />} />
-        <Route path="/student/summary" element={<StudentSummaryPage />} />
-        <Route path="/advisor/summary" element={<AdvisorSummaryPage />} />
-        <Route path="/instructor/summary" element={<InstructorSummaryPage />} />
+        <Route path="/student/summary" element={
+         <div>
+          <NavBar userRole = "student"/>
+          <StudentSummaryPage />  
+         </div>} 
+          />
+        <Route path="/advisor/summary" element={
+          <div>
+          <NavBar userRole = "advisor"/>
+          <AdvisorSummaryPage />  
+         </div>} />
+        <Route path="/instructor/summary" element={
+          <div>
+          <NavBar userRole = "instructor"/>
+          <InstructorSummaryPage />  
+         </div>} />
         <Route
           path="/staff"
           element={

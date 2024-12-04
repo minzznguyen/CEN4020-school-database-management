@@ -84,8 +84,6 @@ const CreateAccount = () => {
       const auth = getAuth(app);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log("this is user");  
-      console.log(user);
       // Prepare data for the backend
       let newData = {};
 
@@ -99,14 +97,13 @@ const CreateAccount = () => {
           newData = {newId: user.uid, name: `${firstName} ${lastName}`, departmentId: '1'};
           endpoint = 'http://localhost:3000/instructors/';
           break;
-        // case 'staff':
-        //   newData = {name, departmentId: ['1']};
-        //   endpoint = 'http://localhost:3000/staff/';
-        //   break;
+        case 'staff':
+          newData = {name, departmentId: ['1']};
+          endpoint = 'http://localhost:3000/staff/';
+          break;
         case 'advisor':
           newData = {AdvisorId: user.uid, name: `${firstName} ${lastName}`, Departments: ['1']};
           endpoint = 'http://localhost:3000/advisors/';  
-          console.log(newData);
           break;
         default:
           throw new Error("Invalid role specified");
@@ -116,8 +113,6 @@ const CreateAccount = () => {
   
       // Make the POST request
       const response = await axios.post(endpoint, newData);
-      console.log("this is response");
-      console.log(response);
       const tempuser = auth.currentUser;
       if (response.status === 201) {
         alert('Account created successfully');

@@ -21,8 +21,6 @@ const LogIn = () => {
             const auth = getAuth(app);
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            console.log(user);
-
             // Get user role from UserType collection
             const db = getFirestore(app);
             let role = '';
@@ -35,13 +33,13 @@ const LogIn = () => {
                 userTypeDoc = await getDoc(doc(db, 'Advisor', user.uid));
                 role = 'advisor';
             }
-            console.log(userTypeDoc);
             if (!userTypeDoc.exists()) {
                 throw new Error('User role not found');
             }
 
             // Set user in context
-            setUser(user);  // Update the user context with the logged-in user
+            console.log({...user,role});
+            setUser({...user,role});  // Update the user context with the logged-in user
 
             // Route based on user role
             switch (role) {

@@ -12,7 +12,7 @@ export const UserProvider = ({ children }) => {
     useEffect(() => {
         const auth = getAuth(app);
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user); // Set the user when authentication state changes
+            setUser(user ? user : null); // Set the user when authentication state changes
         });
 
         return () => unsubscribe(); // Clean up when the component unmounts
@@ -26,4 +26,4 @@ export const UserProvider = ({ children }) => {
 };
 
 // Custom hook to use user context
-export const useUser = () => useContext(UserContext);  // Correct usage of useContext
+export const useUser = () => useContext(UserContext);
