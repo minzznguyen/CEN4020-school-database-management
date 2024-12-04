@@ -31,47 +31,70 @@ const getCourseById = async (req, res) => {
 };
 
 const addCourse = async (req, res) => {
-    try {
-        const { CourseId, name, departmentId, Classtime } = req.body;
-        
-        if (!CourseId || !name || !departmentId || !Classtime) {
-            return res.status(400).json({ error: 'CourseId, name, departmentId, and Classtime are required' });
+  try {
+    const {
+      courseId,
+      name,
+      courseDesc,
+      departmentId,
+      instructorId,
+      semester,
+      Classtime
+    } = req.body;
+
+    // Validate required fields
+    if (!courseId || !name || !courseDesc || !departmentId || 
+        !instructorId || !semester || !Classtime || !Array.isArray(Classtime)) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        required: {
+          courseId: 'string',
+          name: 'string',
+          courseDesc: 'string',
+          departmentId: 'string',
+          instructorId: 'string',
+          semester: 'string',
+          Classtime: 'array of strings'
         }
-
-        // Check for duplicate CourseId
-        const courseIdSnapshot = await db.collection('Course')
-            .where('CourseId', '==', CourseId)
-            .get();
-
-        if (!courseIdSnapshot.empty) {
-            return res.status(409).json({ error: 'Course with this CourseId already exists' });
-        }
-
-        // Check for duplicate course name AND time windows
-        const duplicateSnapshot = await db.collection('Course')
-            .where('name', '==', name)
-            .where('Classtime', '==', Classtime)
-            .get();
-
-        if (!duplicateSnapshot.empty) {
-            return res.status(409).json({ 
-                error: 'A course with the same name and time windows already exists'
-            });
-        }
-
-        const newCourse = {
-            CourseId,
-            name,
-            departmentId,
-            Classtime
-        };
-
-        const docRef = await db.collection('Course').add(newCourse);
-        res.status(201).json({ id: docRef.id, ...newCourse });
-    } catch (error) {
-        console.error('Error adding course:', error);
-        res.status(500).json({ error: 'Failed to add course' });
+      });
     }
+
+    // Check for duplicate courseId
+    const existingCourse = await db.collection('Course')
+      .where('courseId', '==', courseId)
+      .get();
+
+    if (!existingCourse.empty) {
+      return res.status(409).json({ error: 'Course ID already exists' });
+    }
+
+    // Create new course with all required fields
+    const newCourse = {
+      courseId,
+      name,
+      courseDesc,
+      departmentId,
+      instructorId,
+      semester,
+      Classtime,
+      studentCourseRecord: []  // Initialize empty array for student records
+    };
+
+    // Add the course with a specific ID (using courseId as document ID)
+    await db.collection('Course').doc(courseId).set(newCourse);
+
+    res.status(201).json({
+      message: 'Course created successfully',
+      course: newCourse
+    });
+
+  } catch (error) {
+    console.error('Error creating course:', error);
+    res.status(500).json({ 
+      error: 'Failed to create course',
+      details: error.message 
+    });
+  }
 };
 
 const updateCourse = async (req, res) => {
@@ -106,10 +129,184 @@ const deleteCourse = async (req, res) => {
   }
 };
 
+const getCourseStudents = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const studentRecordsSnapshot = await db.collection('StudentCourseRecord')
+      .where('CourseId', '==', id)
+      .get();
+
+    if (studentRecordsSnapshot.empty) {
+      return res.status(200).json([]);
+    }
+
+    const studentsPromises = studentRecordsSnapshot.docs.map(async (record) => {
+      const recordData = record.data();
+      const studentId = recordData.studentId;
+      const studentDoc = await db.collection('Students').doc(studentId).get();
+      
+      if (studentDoc.exists) {
+        const studentData = studentDoc.data();
+        const majorDoc = await db.collection('Major').doc(studentData.majorId).get();
+        const majorName = majorDoc.exists ? majorDoc.data().majorName : 'Unknown';
+        
+        return {
+          name: studentData.name,
+          major: majorName,
+          gpa: recordData.GPA
+        };
+      }
+      return null;
+    });
+
+    const students = (await Promise.all(studentsPromises)).filter(student => student !== null);
+    res.status(200).json(students);
+
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch course students' });
+  }
+};
+
+const enrollStudent = async (req, res) => {
+  try {
+    const { id, studentId } = req.params;
+
+    // Get course details
+    const courseDoc = await db.collection('Course').doc(id).get();
+    if (!courseDoc.exists) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    const courseData = courseDoc.data();
+
+    // Check if student exists
+    const studentDoc = await db.collection('Students').doc(studentId).get();
+    if (!studentDoc.exists) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    const studentData = studentDoc.data();
+
+    // Check if enrollment already exists
+    const existingEnrollment = await db.collection('StudentCourseRecord')
+      .where('CourseId', '==', id)
+      .where('studentId', '==', studentId)
+      .get();
+
+    if (!existingEnrollment.empty) {
+      return res.status(409).json({ error: 'Student is already enrolled in this course' });
+    }
+
+    // Get all records to determine the next ID
+    const allRecordsSnapshot = await db.collection('StudentCourseRecord').get();
+    const nextId = (allRecordsSnapshot.size + 1).toString();
+
+    // Create new StudentCourseRecord
+    const newRecord = {
+      CourseId: id,
+      studentId: studentId,
+      instructorId: courseData.instructorId,
+      GPA: "0.0"
+    };
+
+    // Add the record with the sequential ID
+    await db.collection('StudentCourseRecord').doc(nextId).set(newRecord);
+
+    // Update the Course document's studentCourseRecord array
+    await db.collection('Course').doc(id).update({
+      studentCourseRecord: [...(courseData.studentCourseRecord || []), nextId]
+    });
+
+    // Update the Student document's studentCourseRecord array
+    await db.collection('Students').doc(studentId).update({
+      studentCourseRecord: [...(studentData.studentCourseRecord || []), nextId]
+    });
+
+    res.status(201).json({
+      message: 'Student enrolled successfully',
+      recordId: nextId,
+      ...newRecord
+    });
+
+  } catch (error) {
+    console.error('Error enrolling student:', error);
+    res.status(500).json({ 
+      error: 'Failed to enroll student',
+      details: error.message 
+    });
+  }
+};
+
+const unenrollStudent = async (req, res) => {
+  try {
+    const { id, studentId } = req.params;
+
+    // Get course details
+    const courseDoc = await db.collection('Course').doc(id).get();
+    if (!courseDoc.exists) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    const courseData = courseDoc.data();
+
+    // Get student details
+    const studentDoc = await db.collection('Students').doc(studentId).get();
+    if (!studentDoc.exists) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    const studentData = studentDoc.data();
+
+    // Find the enrollment record
+    const enrollmentSnapshot = await db.collection('StudentCourseRecord')
+      .where('CourseId', '==', id)
+      .where('studentId', '==', studentId)
+      .get();
+
+    if (enrollmentSnapshot.empty) {
+      return res.status(404).json({ error: 'Enrollment record not found' });
+    }
+
+    // Get the record ID to be deleted
+    const recordId = enrollmentSnapshot.docs[0].id;
+
+    // Delete the StudentCourseRecord
+    await db.collection('StudentCourseRecord').doc(recordId).delete();
+
+    // Update Course's studentCourseRecord array
+    const updatedCourseRecords = courseData.studentCourseRecord.filter(
+      record => record !== recordId
+    );
+    await db.collection('Course').doc(id).update({
+      studentCourseRecord: updatedCourseRecords
+    });
+
+    // Update Student's studentCourseRecord array
+    const updatedStudentRecords = studentData.studentCourseRecord.filter(
+      record => record !== recordId
+    );
+    await db.collection('Students').doc(studentId).update({
+      studentCourseRecord: updatedStudentRecords
+    });
+
+    res.status(200).json({
+      message: 'Student unenrolled successfully',
+      deletedRecordId: recordId
+    });
+
+  } catch (error) {
+    console.error('Error unenrolling student:', error);
+    res.status(500).json({ 
+      error: 'Failed to unenroll student',
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllCourses,
   getCourseById,
   addCourse,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  getCourseStudents,
+  enrollStudent,
+  unenrollStudent
 }; 

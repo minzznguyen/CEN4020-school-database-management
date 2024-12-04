@@ -5,11 +5,18 @@ const {
   getDepartmentById,
   addDepartment,
   updateDepartment,
-  deleteDepartment
+  deleteDepartment,
+  getDepartmentMajors,
+  getDepartmentGPA,
+  getHighestGPADepartments
 } = require('../controllers/departmentController');
 
 // GET all departments
 router.get('/', getAllDepartments);
+
+// Add new route for getting departments sorted by their GPAs
+// This needs to come before /:id routes
+router.get('/highestGPAeach', getHighestGPADepartments);
 
 // GET specific department by ID
 router.get('/:id', getDepartmentById);
@@ -22,5 +29,11 @@ router.put('/:id', updateDepartment);
 
 // DELETE department
 router.delete('/:id', deleteDepartment);
+
+// Add new route for getting majors in a department
+router.get('/:id/majors', getDepartmentMajors);
+
+// Add new route for getting department's overall GPA
+router.get('/:id/gpa', getDepartmentGPA);
 
 module.exports = router; 

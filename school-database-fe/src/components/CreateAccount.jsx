@@ -1,47 +1,150 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { getFirestore, doc, setDoc, collection, query, getDocs, orderBy, limit } from "firebase/firestore";
 import { app } from '../firebaseConfig';
+import axios from 'axios';
 
 const CreateAccount = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const generateNewId = async (collectionName) => {
+    const db = getFirestore(app);
+    const collectionRef = collection(db, collectionName);
+    
+    const snapshot = await getDocs(query(collectionRef, orderBy('studentId', 'desc'), limit(1)));
+    
+    if (snapshot.empty) {
+      return "1";
+    }
+    
+    const highestId = snapshot.docs[0].data().studentId;
+    return (parseInt(highestId) + 1).toString();
+  };
+
+  const validatePassword = (password) => {
+    if (password.length < 8) return false;
+    if (!/[A-Z]/.test(password)) return false;
+    if (!/[a-z]/.test(password)) return false;
+    if (!/[0-9]/.test(password)) return false;
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords don't match");
-      return;
-    }
-    if (!acceptTerms) {
-      alert("Please accept the Terms and Conditions");
-      return;
-    }
-    const auth = getAuth(app);
+    setIsLoading(true);
+  
     try {
+      const { firstName, lastName, email, role, password, confirmPassword } = formData;
+  
+      // Validations
+      if (password !== confirmPassword) {
+        alert("Passwords don't match");
+        setIsLoading(false);
+        return;
+      }
+  
+      if (!validatePassword(password)) {
+        alert('Password must be at least 8 characters long and contain uppercase, lowercase, and numbers');
+        setIsLoading(false);
+        return;
+      }
+  
+      if (!acceptTerms) {
+        alert("Please accept the Terms and Conditions");
+        setIsLoading(false);
+        return;
+      }
+  
+      if (!role) {
+        alert("Please select a role");
+        setIsLoading(false);
+        return;
+      }
+  
+      // Call Firebase Auth to create a user
+      const auth = getAuth(app);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log("Created user:", user);
+      // Prepare data for the backend
+      let newData = {};
 
-      // Call your backend
-      await fetch('http://localhost:3001/user-registered', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ uid: user.uid, email: user.email }),
-      });
-
-      alert('Account created successfully');
-      navigate('/'); // Redirect to login page
+      let endpoint = '';
+      switch (role) {
+        case 'student':
+          newData = {newId: user.uid, name: `${firstName} ${lastName}`, majorId: '1'};
+          endpoint = 'http://localhost:3000/students/';
+          break;
+        case 'instructor':
+          newData = {newId: user.uid, name: `${firstName} ${lastName}`, departmentId: '1'};
+          endpoint = 'http://localhost:3000/instructors/';
+          break;
+        case 'staff':
+          newData = {name, departmentId: ['1']};
+          endpoint = 'http://localhost:3000/staff/';
+          break;
+        case 'advisor':
+          newData = {AdvisorId: user.uid, name: `${firstName} ${lastName}`, Departments: ['1']};
+          endpoint = 'http://localhost:3000/advisors/';  
+          break;
+        default:
+          throw new Error("Invalid role specified");
+      }
+      
+      // Define the endpoint based on the role
+  
+      // Make the POST request
+      const response = await axios.post(endpoint, newData);
+      const tempuser = auth.currentUser;
+      if (response.status === 201) {
+        alert('Account created successfully');
+        if (tempuser && !tempuser.emailVerified) {
+          // Send the verification email
+          try {
+              await sendEmailVerification(tempuser);
+              console.log("Verification email sent!");
+              alert('A verification email has been sent to your email address. Please verify your email before proceeding.');
+          } catch (error) {
+              console.error("Error sending verification email:", error);
+              alert('There was an error sending the verification email.');
+          }
+      } else {
+          console.log("User is already verified or not logged in.");
+      }
+        navigate('/');
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`);
+      }
     } catch (error) {
-      console.error("Error creating account:", error.message);
-      alert(error.message || 'An error occurred');
+      console.error("Error creating account:", error);
+      if (error.response && error.response.data) {
+        alert(error.response.data.message || 'An error occurred.');
+      } else {
+        alert(error.message || 'An error occurred while creating your account.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
+  
 
   return (
     <section className="bg-gray-50 dark:bg-gray-900">
@@ -57,6 +160,38 @@ const CreateAccount = () => {
             </h1>
             <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
               <div>
+                <label htmlFor="firstName" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  name="firstName"
+                  id="firstName"
+                  placeholder="John"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  required
+                  value={formData.firstName}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="lastName" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  id="lastName"
+                  placeholder="Doe"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  required
+                  value={formData.lastName}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
                 <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                   Your email
                 </label>
@@ -67,10 +202,31 @@ const CreateAccount = () => {
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   placeholder="name@company.com"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                 />
               </div>
+
+              <div>
+                <label htmlFor="role" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Select your role
+                </label>
+                <select
+                  name="role"
+                  id="role"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  required
+                  value={formData.role}
+                  onChange={handleChange}
+                >
+                  <option value="">Select role</option>
+                  <option value="student">Student</option>
+                  <option value="instructor">Instructor</option>
+                  <option value="staff">Staff</option>
+                  <option value="advisor">Advisor</option>
+                </select>
+              </div>
+
               <div>
                 <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                   Password
@@ -82,25 +238,27 @@ const CreateAccount = () => {
                   placeholder="••••••••"
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                 />
               </div>
+
               <div>
-                <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label htmlFor="confirmPassword" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                   Confirm password
                 </label>
                 <input
                   type="password"
-                  name="confirm-password"
-                  id="confirm-password"
+                  name="confirmPassword"
+                  id="confirmPassword"
                   placeholder="••••••••"
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                 />
               </div>
+
               <div className="flex items-start">
                 <div className="flex items-center h-5">
                   <input
@@ -122,12 +280,15 @@ const CreateAccount = () => {
                   </label>
                 </div>
               </div>
+
               <button
                 type="submit"
-                className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                disabled={isLoading}
+                className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50"
               >
-                Create an account
+                {isLoading ? 'Creating account...' : 'Create an account'}
               </button>
+
               <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                 Already have an account?{' '}
                 <Link to="/" className="font-medium text-primary-600 hover:underline dark:text-primary-500">
