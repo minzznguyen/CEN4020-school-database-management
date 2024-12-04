@@ -157,7 +157,7 @@ const createInstructor = async (req, res) => {
       .where('InstructorId', '==', newId)
       .get();
 
-    if (!advisorSnapshot.empty) {
+    if (!instructorSnapshot.empty) {
       return res.status(409).json({ error: 'Advisor with this AdvisorId already exists' });
     }
 

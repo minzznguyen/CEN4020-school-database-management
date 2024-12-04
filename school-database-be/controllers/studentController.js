@@ -139,7 +139,7 @@ const createStudent = async (req, res) => {
       .where('newId', '==', newId)
       .get();
 
-    if (!advisorSnapshot.empty) {
+    if (!studentSnapshot.empty) {
       return res.status(409).json({ error: 'Advisor with this AdvisorId already exists' });
     }
 
