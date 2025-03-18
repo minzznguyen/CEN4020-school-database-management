@@ -38,6 +38,7 @@ const addAdvisor = async (req, res) => {
     const { AdvisorId, name, Departments } = req.body;
 
     if (!AdvisorId || !name || !Departments) {
+      console.log('Request Body:', req.body);
       return res.status(400).json({ error: 'AdvisorId, name, and Departments are required' });
     }
 

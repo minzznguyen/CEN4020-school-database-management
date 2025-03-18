@@ -62,25 +62,26 @@ a.hover-effect:hover::before {
   transform: scaleX(1);
 }
          
+         
 .btn-grad {
-    background-image: linear-gradient(to right, #54bab3 0%, #035cae  51%, #54bab3  100%);
-    margin: 10px;
-    padding: 15px 20px;
-    text-align: center;
-    text-transform: uppercase;
-    transition: 0.5s;
-    background-size: 200% auto;
-    color: rgb(247, 252, 255);            
-    box-shadow: 0 0 20px #eee;
-    border-radius: 25px;
-    display: block;
-  }
+  background-image: linear-gradient(to right, #54bab3 0%, #035cae  51%, #54bab3  100%);
+  margin: 10px;
+  padding: 15px 20px;
+  text-align: center;
+  text-transform: uppercase;
+  transition: 0.5s;
+  background-size: 200% auto;
+  color: rgb(247, 252, 255);            
+  box-shadow: 0 0 20px #eee;
+  border-radius: 25px;
+  display: block;
+}
 
-  .btn-grad:hover {
-    background-position: right center; /* change the direction of the change here */
-    color: #fff;
-    text-decoration: none;
-  }
+.btn-grad:hover {
+  background-position: right center; /* change the direction of the change here */
+  color: #fff;
+  text-decoration: none;
+}
  
   .link--popup-text {
     position: relative;
